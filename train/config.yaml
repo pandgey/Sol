@@ -1,0 +1,13 @@
+base_model: "base/phi-2"
+dataset_path: "../data/sol_anime.jsonl"
+output_dir: "../skills/sol_anime"
+learning_rate: 2e-4
+num_train_epochs: 2
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 16
+lr_scheduler_type: "cosine"
+warmup_ratio: 0.03
+max_seq_length: 4096
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
