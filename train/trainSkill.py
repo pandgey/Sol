@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from trl import SFTTrainer, SFTConfig
 from peft import LoraConfig
 
-with open("config_anime.yaml") as f:
+with open("config.yaml") as f:
     cfg = yaml.safe_load(f)
 
 tok = AutoTokenizer.from_pretrained(cfg["base_model"], use_fast=True)

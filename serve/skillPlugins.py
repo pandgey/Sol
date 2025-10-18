@@ -1,7 +1,7 @@
 import argparse, subprocess
 
 skills = {
-    "anime": "../skills/sol_behavior",
+    "anime": "../skills/sol_anime",
     "study": "../skills/sol_studybuddy",
     "barista": "../skills/sol_barista"
 }
