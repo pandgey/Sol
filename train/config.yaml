@@ -1,5 +1,5 @@
 # Model configuration
-base_model: "../base/phi-2"
+base_model: "microsoft/phi-3-mini-4k-instruct"
 
 # Dataset
 dataset_path: "../data/sol_anime.json"
