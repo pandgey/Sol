@@ -1,8 +1,8 @@
 import os, torch, yaml
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from trl import SFTTrainer, SFTConfig
-from peft import LoraConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, BitsAndBytesConfig
+from trl import SFTTrainer
+from peft import LoraConfig, prepare_model_for_kbit_training
 
 # ──────────────────────────────────────────────
 # Load configuration
@@ -44,11 +44,21 @@ ds = ds.map(format_chat, remove_columns=["messages"])
 # ──────────────────────────────────────────────
 print("Loading base model:", base_model)
 dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+
+# Load model with proper device mapping
 model = AutoModelForCausalLM.from_pretrained(
     base_model,
-    torch_dtype=dtype,
+    dtype=dtype,
     device_map="auto",
+    low_cpu_mem_usage=True,
+    use_cache=False,  # Disable KV cache to save memory
+    torch_dtype=dtype,
+    offload_folder="offload",  # Use disk offloading if needed
 )
+
+# Prepare model for training with LoRA
+from peft import prepare_model_for_kbit_training
+model = prepare_model_for_kbit_training(model)
 
 # ──────────────────────────────────────────────
 # LoRA configuration
@@ -68,33 +78,35 @@ peft_cfg = LoraConfig(
 # ──────────────────────────────────────────────
 # Training configuration
 # ──────────────────────────────────────────────
-train_cfg = SFTConfig(
+train_cfg = TrainingArguments(
     output_dir=output_dir,
-    num_train_epochs=cfg.get("num_train_epochs", 2),
-    per_device_train_batch_size=cfg.get("per_device_train_batch_size", 1),
-    gradient_accumulation_steps=cfg.get("gradient_accumulation_steps", 16),
-    learning_rate=cfg.get("learning_rate", 2e-4),
+    num_train_epochs=int(cfg.get("num_train_epochs", 2)),
+    per_device_train_batch_size=int(cfg.get("per_device_train_batch_size", 1)),
+    gradient_accumulation_steps=int(cfg.get("gradient_accumulation_steps", 16)),
+    gradient_checkpointing=True,  # Enable gradient checkpointing to save memory
+    learning_rate=float(cfg.get("learning_rate", 2e-4)),
     lr_scheduler_type=cfg.get("lr_scheduler_type", "cosine"),
-    warmup_ratio=cfg.get("warmup_ratio", 0.03),
-    max_seq_length=cfg.get("max_seq_length", 4096),
+    warmup_ratio=float(cfg.get("warmup_ratio", 0.03)),
     bf16=torch.cuda.is_bf16_supported(),
     fp16=not torch.cuda.is_bf16_supported(),
     logging_steps=25,
     save_strategy="epoch",
     report_to="none",
+    optim="paged_adamw_8bit",  # Use 8-bit optimizer to save memory
+    max_grad_norm=0.3,
 )
 
 # ──────────────────────────────────────────────
 # Training
 # ──────────────────────────────────────────────
 print("Starting fine-tuning...")
+
 trainer = SFTTrainer(
     model=model,
-    tokenizer=tok,
     train_dataset=ds,
-    dataset_text_field="text",
     peft_config=peft_cfg,
     args=train_cfg,
+    formatting_func=lambda x: x["text"],
 )
 
 trainer.train()
