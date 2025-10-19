@@ -40,25 +40,44 @@ ds = load_dataset("json", data_files=dataset_path, split="train")
 ds = ds.map(format_chat, remove_columns=["messages"])
 
 # ──────────────────────────────────────────────
-# Base model
+# Base model with 4-bit quantization
 # ──────────────────────────────────────────────
 print("Loading base model:", base_model)
-dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 
-# Load model with proper device mapping
-model = AutoModelForCausalLM.from_pretrained(
-    base_model,
-    dtype=dtype,
-    device_map="auto",
-    low_cpu_mem_usage=True,
-    use_cache=False,  # Disable KV cache to save memory
-    torch_dtype=dtype,
-    offload_folder="offload",  # Use disk offloading if needed
+# Clear GPU cache first
+torch.cuda.empty_cache()
+
+try:
+    import bitsandbytes as bnb
+    print("bitsandbytes is installed")
+except ImportError:
+    print("ERROR: bitsandbytes is not installed! Install it with: pip install bitsandbytes")
+    exit(1)
+
+# 4-bit quantization config to save memory
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+    bnb_4bit_use_double_quant=True,
 )
 
+# Load model with quantization
+model = AutoModelForCausalLM.from_pretrained(
+    base_model,
+    quantization_config=bnb_config,
+    device_map="auto",
+    trust_remote_code=True,
+    low_cpu_mem_usage=True,
+)
+
+print(f"Model loaded. Checking if quantized...")
+print(f"Model dtype: {model.dtype}")
+print(f"First layer dtype: {next(model.parameters()).dtype}")
+
 # Prepare model for training with LoRA
-from peft import prepare_model_for_kbit_training
-model = prepare_model_for_kbit_training(model)
+model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+print("Model prepared for training")
 
 # ──────────────────────────────────────────────
 # LoRA configuration
