@@ -1,8 +1,7 @@
-from document_processor import DocumentProcessor
-from vector_store import VectorStoreManager
-from qa_chain import QAChain
+from processor.documentProcessor import DocumentProcessor
+from tmp.vectorStore import VectorStoreManager
+from logic.qaChain import QAChain
 import config
-
 
 def setup_rag_system(pdf_path, vectorstore_path):
     """Set up the complete RAG system."""

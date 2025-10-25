@@ -1,6 +1,5 @@
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
-
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 
 class VectorStoreManager:
     """Manages vector store creation, saving, and loading."""
