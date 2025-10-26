@@ -1,8 +1,8 @@
 from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains import create_retrieval_chain
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 
 class QAChain:
     """Handles the question-answering chain setup and execution."""
@@ -30,9 +30,19 @@ class QAChain:
         self.chain = None
     
     def create_chain(self, retriever):
-        """Create the retrieval QA chain."""
-        doc_chain = create_stuff_documents_chain(self.llm, self.prompt)
-        self.chain = create_retrieval_chain(retriever, doc_chain)
+        """Create the retrieval QA chain using LCEL."""
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+        
+        self.chain = (
+            {
+                "context": retriever | format_docs,
+                "input": RunnablePassthrough()
+            }
+            | self.prompt
+            | self.llm
+            | StrOutputParser()
+        )
         return self.chain
     
     def query(self, question):
@@ -40,8 +50,8 @@ class QAChain:
         if self.chain is None:
             raise ValueError("Chain not created. Call create_chain first.")
         
-        response = self.chain.invoke({"input": question})
-        return response
+        response = self.chain.invoke(question)
+        return {"answer": response}
     
     def get_answer(self, question):
         """Get only the answer text from a query."""
