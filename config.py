@@ -1,9 +1,5 @@
 import os
 
-# # API Configuration
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "Your Key")
-# os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-
 # Model Configuration
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 LLM_MODEL = "microsoft/Phi-3.5-mini-instruct"
