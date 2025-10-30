@@ -5,7 +5,7 @@ EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 LLM_MODEL = "microsoft/Phi-3.5-mini-instruct"
 
 # Paths
-PDF_PATH = "/content/qlora_paper.pdf"
+PDF_PATH = "content/qlora_paper.pdf"
 VECTORSTORE_PATH = "vectorstore.db"
 
 # Prompt Template
