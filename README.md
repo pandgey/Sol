@@ -1,4 +1,4 @@
-# The algorithm
+# Sol
 
 A **Retrieval-Augmented Generation (RAG)** algorithm that uses a **Large Language Model (LLM)** to process data and provide context-aware responses based on user queries.  
 
