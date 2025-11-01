@@ -13,6 +13,7 @@ class QAChain:
         model = AutoModelForCausalLM.from_pretrained(
             llm_model,
             device_map="auto",
+            load_in_8bit=True,
             torch_dtype="auto"
         )
 
