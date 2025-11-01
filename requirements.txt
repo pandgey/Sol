@@ -1,0 +1,22 @@
+# LangChain packages
+langchain==1.0.2
+langchain-classic==1.0.0
+langchain-community==0.4
+langchain-core==1.0.1
+langchain-huggingface==1.0.0
+langchain-text-splitters==1.0.0
+
+# Transformers and ML
+transformers
+torch
+accelerate
+bitsandbytes
+
+# Embeddings
+sentence-transformers
+
+# Vector store
+faiss-cpu
+
+# PDF processing
+pypdf
